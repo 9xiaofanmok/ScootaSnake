@@ -7,12 +7,16 @@ const socket = io("http://localhost:3000");
 socket.on("init", handleInit);
 socket.on("gameState", handleGameState);
 socket.on("gameOver", handleGameOver);
+socket.on("gameCode", handleGameCode);
+socket.on("unknownGame", handleUnknownGame);
+socket.on("tooManyPlayers", handleTooManyPlayers);
 
 const gameScreen = document.getElementById("gameScreen");
 const initialScreen = document.getElementById("initialScreen");
 const newGameBtn = document.getElementById("newGameButton");
 const joinGameBtn = document.getElementById("joinGameButton");
 const gameCodeInput = document.getElementById("gameCodeInput");
+const gameCodeDisplay = document.getElementById("gameCodeDisplay");
 
 newGameBtn.addEventListener("click", newGame);
 joinGameBtn.addEventListener("click", joinGame);
@@ -25,9 +29,11 @@ function newGame() {
 function joinGame() {
     const gameCode = gameCodeInput.value;
     socket.emit("joinGame", gameCode);
+    init();
 }
 
-let canvas, ctx;
+let canvas, ctx, playerNumber;
+let gameActive = false;
 
 function init() {
     initialScreen.style.display = "none";
@@ -42,6 +48,7 @@ function init() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     document.addEventListener("keydown", keydown);
+    gameActive = true;
 }
 
 function keydown(e) {
@@ -59,7 +66,8 @@ function paintGame(state) {
     ctx.fillStyle = FOOD_COLOUR;
     ctx.fillRect(food.x * size, food.y * size, size, size);
 
-    paintPlayer(state.player, size, SNAKE_COLOUR);
+    paintPlayer(state.players[0], size, SNAKE_COLOUR);
+    paintPlayer(state.players[1], size, "red");
 }
 
 function paintPlayer(playerState, size, colour) {
@@ -71,15 +79,51 @@ function paintPlayer(playerState, size, colour) {
     }
 }
 
-function handleInit(msg) {
-    console.log(msg);
+function handleInit(number) {
+    playerNumber = number;
 }
 
 function handleGameState(gameState) {
+    if (!gameActive) {
+        return;
+    }
     gameState = JSON.parse(gameState);
     requestAnimationFrame(() => paintGame(gameState));
 }
 
-function handleGameOver() {
-    alert("You lost!");
+function handleGameOver(data) {
+    if (!gameActive) {
+        return;
+    }
+
+    data = JSON.parse(data);
+
+    if (data.winner === playerNumber) {
+        alert("You win!");
+    } else {
+        alert("You lost!");
+    }
+    gameActive = false;
+}
+
+function handleGameCode(gameCode) {
+    gameCodeDisplay.innerText = gameCode;
+}
+
+function handleUnknownGame() {
+    reset();
+    alert("Unknown game code"); // TODO: change to show on UI
+}
+
+function handleTooManyPlayers() {
+    reset();
+    alert("This game is already in progress"); // TODO: change to show on UI
+}
+
+function reset() {
+    playerNumber = null;
+    gameCodeInput.value = "";
+    gameCodeDisplay.innerText = "";
+    initialScreen.style.display = "block";
+    initialScreen.style.display = "none";
 }
