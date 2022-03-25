@@ -1,21 +1,14 @@
-const { GRID_SIZE } = require("./constants");
-
 function initGame() {
-    const state = createGameState();
-    randomFood(state);
-    return state;
-}
-
-function createGameState() {
     return {
         players: [
             {
+                id: 1,
                 position: {
                     x: 3,
                     y: 10,
                 },
                 velocity: {
-                    x: 1,
+                    x: 0,
                     y: 0,
                 },
                 snake: [
@@ -23,27 +16,85 @@ function createGameState() {
                     { x: 2, y: 10 },
                     { x: 3, y: 10 },
                 ],
-                direction: "right",
+                direction: "",
+                score: 0,
             },
             {
+                id: 2,
                 position: {
                     x: 10,
-                    y: 17,
+                    y: 16,
                 },
                 velocity: {
                     x: 0,
                     y: 0,
                 },
                 snake: [
+                    { x: 10, y: 16 },
                     { x: 10, y: 17 },
                     { x: 10, y: 18 },
-                    { x: 10, y: 19 },
                 ],
-                direction: "up",
+                direction: "",
+                score: 0,
+            },
+            {
+                id: 3,
+                position: {
+                    x: 15,
+                    y: 3,
+                },
+                velocity: {
+                    x: 0,
+                    y: 0,
+                },
+                snake: [
+                    { x: 15, y: 1 },
+                    { x: 15, y: 2 },
+                    { x: 15, y: 3 },
+                ],
+                direction: "",
+                score: 0,
+            },
+            {
+                id: 4,
+                position: {
+                    x: 25,
+                    y: 28,
+                },
+                velocity: {
+                    x: 0,
+                    y: 0,
+                },
+                snake: [
+                    { x: 25, y: 28 },
+                    { x: 26, y: 28 },
+                    { x: 27, y: 28 },
+                ],
+                direction: "",
+                score: 0,
+            },
+            {
+                id: 5,
+                position: {
+                    x: 30,
+                    y: 20,
+                },
+                velocity: {
+                    x: 0,
+                    y: 0,
+                },
+                snake: [
+                    { x: 30, y: 20 },
+                    { x: 30, y: 21 },
+                    { x: 30, y: 22 },
+                ],
+                direction: "",
+                score: 0,
             },
         ],
         food: {},
-        gridsize: GRID_SIZE,
+        gridsize: 0,
+        activePlayers: [],
     };
 }
 
@@ -53,100 +104,67 @@ function gameLoop(state) {
         return;
     }
 
-    const playerOne = state.players[0];
-    const playerTwo = state.players[1];
-
-    // mover player based on velocity --> 1 x means right, -1 x means left
-    playerOne.position.x += playerOne.velocity.x;
-    playerOne.position.y += playerOne.velocity.y;
-
-    playerTwo.position.x += playerTwo.velocity.x;
-    playerTwo.position.y += playerTwo.velocity.y;
-
-    // ensure player does not go out of screen
-    if (
-        playerOne.position.x < 0 ||
-        playerOne.position.x > GRID_SIZE ||
-        playerOne.position.y < 0 ||
-        playerOne.position.y > GRID_SIZE
-    ) {
-        // TODO: change to return loser?
-        console.log("GAMEOVER: player 1 out of screen");
-        return 2;
-    }
-    if (
-        playerTwo.position.x < 0 ||
-        playerTwo.position.x > GRID_SIZE ||
-        playerTwo.position.y < 0 ||
-        playerTwo.position.y > GRID_SIZE
-    ) {
-        // TODO: change to return loser?
-        console.log("GAMEOVER: player 2 out of screen");
-        return 1;
-    }
-
-    // player eats food
-    if (
-        state.food.x === playerOne.position.x &&
-        state.food.y === playerOne.position.y
-    ) {
-        playerOne.snake.push({ ...playerOne.position });
-        playerOne.position.x += playerOne.velocity.x;
-        playerOne.position.y += playerOne.velocity.y;
-        randomFood(state);
-    }
-    if (
-        state.food.x === playerTwo.position.x &&
-        state.food.y === playerTwo.position.y
-    ) {
-        playerTwo.snake.push({ ...playerTwo.position });
-        playerTwo.position.x += playerTwo.velocity.x;
-        playerTwo.position.y += playerTwo.velocity.y;
-        randomFood(state);
-    }
-
-    if (playerOne.velocity.x || playerOne.velocity.y) {
-        for (let cell of playerOne.snake) {
-            // check if player eats itself
-            if (
-                cell.x === playerOne.position.x &&
-                cell.y === playerOne.position.y
-            ) {
-                console.log("GAMEOVER: player 1 eats ownself");
-                return 2;
-            }
+    for (let id of state.activePlayers) {
+        loser = updatePlayer(state.players[id - 1], state);
+        if (loser) {
+            return loser;
         }
-
-        // move snake forward
-        playerOne.snake.push({ ...playerOne.position });
-        playerOne.snake.shift();
-    }
-
-    if (playerTwo.velocity.x || playerTwo.velocity.y) {
-        for (let cell of playerTwo.snake) {
-            // check if player eats itself
-            if (
-                cell.x === playerTwo.position.x &&
-                cell.y === playerTwo.position.y
-            ) {
-                console.log("GAMEOVER: player 2 eats ownself");
-                return 1;
-            }
-        }
-
-        // move snake forward
-        playerTwo.snake.push({ ...playerTwo.position });
-        playerTwo.snake.shift();
     }
 
     // no winner yet
     return false;
 }
 
+function updatePlayer(player, state) {
+    player.position.x += player.velocity.x;
+    player.position.y += player.velocity.y;
+
+    // ensure player does not go out of screen
+    if (
+        player.position.x < 0 ||
+        player.position.x > state.gridsize ||
+        player.position.y < 0 ||
+        player.position.y > state.gridsize
+    ) {
+        // TODO: change to return loser?
+        console.log(`GAMEOVER: player ${player.id} out of screen`);
+        return player.id;
+    }
+
+    // player eats food
+    if (
+        state.food.x === player.position.x &&
+        state.food.y === player.position.y
+    ) {
+        player.snake.push({ ...player.position });
+        player.position.x += player.velocity.x;
+        player.position.y += player.velocity.y;
+        player.score += 10;
+        randomFood(state);
+        return { score: player.score, id: player.id };
+    }
+
+    if (player.velocity.x || player.velocity.y) {
+        for (let cell of player.snake) {
+            // check if player eats itself
+            if (cell.x === player.position.x && cell.y === player.position.y) {
+                console.log(`GAMEOVER: ${player.id} eats ownself`);
+                return player.id;
+            }
+        }
+
+        // move snake forward
+        player.snake.push({ ...player.position });
+        player.snake.shift();
+    }
+
+    return false;
+}
+
 function randomFood(state) {
     food = {
-        x: Math.floor(Math.random() * GRID_SIZE),
-        y: Math.floor(Math.random() * GRID_SIZE),
+        x: Math.floor(Math.random() * state.gridsize),
+        y: Math.floor(Math.random() * state.gridsize),
     };
 
     // make sure food is not position on a snake
@@ -172,7 +190,7 @@ function getUpdatedVelocity(keyCode) {
         }
         case 38: {
             // down
-            return { vel: { x: 0, y: -1 }, direction: "down" };
+            return { vel: { x: 0, y: -1 }, direction: "up" };
         }
         case 39: {
             // right
@@ -180,7 +198,7 @@ function getUpdatedVelocity(keyCode) {
         }
         case 40: {
             // up
-            return { vel: { x: 0, y: 1 }, direction: "up" };
+            return { vel: { x: 0, y: 1 }, direction: "down" };
         }
         default: {
             return { vel: { x: 0, y: 0 }, direction: "" };
@@ -190,6 +208,7 @@ function getUpdatedVelocity(keyCode) {
 
 module.exports = {
     initGame,
+    randomFood,
     gameLoop,
     getUpdatedVelocity,
 };
