@@ -2,7 +2,7 @@ const BG_COLOUR = "#231f20";
 const SNAKE_COLOUR = ["#FFE900", "#FB5012", "#01FDF6", "#CBBAED", "#03FCBA"];
 const FOOD_COLOUR = "#fff";
 
-const socket = io("http://localhost:3000");
+const socket = io("https://limitless-hollows-28517.herokuapp.com/");
 
 socket.on("init", handleInit);
 socket.on("gameState", handleGameState);

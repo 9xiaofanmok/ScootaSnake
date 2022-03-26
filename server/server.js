@@ -1,5 +1,6 @@
 // TODO: ADD END SCREEN (SCORE + RESULTS + PLAY AGAIN BUTTON)
 // TODO: IF PLAYER LEAVE HALFWAY, END GAME
+// TODO: WAITING AND COUNTDOWN SCREEN
 
 const { Server } = require("socket.io");
 const {
@@ -15,9 +16,9 @@ const state = {};
 const clientRooms = {};
 let intervalId;
 
-const io = new Server(3000, {
+const io = new Server(process.env.port || 3000, {
     cors: {
-        origin: "http://localhost:8080",
+        origin: "https://scootasnake.netlify.app/",
     },
 });
 
