@@ -1,6 +1,6 @@
-// TODO: ADD END SCREEN (SCORE + RESULTS + PLAY AGAIN BUTTON)
 // TODO: IF PLAYER LEAVE HALFWAY, END GAME
 // TODO: WAITING AND COUNTDOWN SCREEN
+// TODO: LEGEND PLAYER COLOR
 
 const { Server } = require("socket.io");
 const {
@@ -117,24 +117,31 @@ io.on("connection", (client) => {
             return;
         }
 
-        let vel = getUpdatedVelocity(keyCode).vel;
-        const dir = getUpdatedVelocity(keyCode).direction;
-        if (state[roomName]) {
-            const player = state[roomName].players[client.number - 1];
+        if (
+            keyCode === 37 ||
+            keyCode === 38 ||
+            keyCode === 39 ||
+            keyCode === 40
+        ) {
+            let vel = getUpdatedVelocity(keyCode).vel;
+            const dir = getUpdatedVelocity(keyCode).direction;
+            if (state[roomName]) {
+                const player = state[roomName].players[client.number - 1];
 
-            if (
-                (player.direction === "left" && dir === "right") ||
-                (player.direction === "right" && dir === "left") ||
-                (player.direction === "up" && dir === "down") ||
-                (player.direction === "down" && dir === "up")
-            ) {
-                vel = player.velocity;
-            } else {
-                player.direction = dir;
-            }
+                if (
+                    (player.direction === "left" && dir === "right") ||
+                    (player.direction === "right" && dir === "left") ||
+                    (player.direction === "up" && dir === "down") ||
+                    (player.direction === "down" && dir === "up")
+                ) {
+                    vel = player.velocity;
+                } else {
+                    player.direction = dir;
+                }
 
-            if (vel) {
-                player.velocity = vel;
+                if (vel) {
+                    player.velocity = vel;
+                }
             }
         }
     }

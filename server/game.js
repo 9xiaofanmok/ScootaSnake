@@ -9,7 +9,7 @@ function initGame() {
                     y: 10,
                 },
                 velocity: {
-                    x: 0,
+                    x: 1,
                     y: 0,
                 },
                 snake: [
@@ -28,7 +28,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 0,
+                    y: -1,
                 },
                 snake: [
                     { x: 10, y: 16 },
@@ -46,7 +46,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 0,
+                    y: 1,
                 },
                 snake: [
                     { x: 15, y: 1 },
@@ -63,7 +63,7 @@ function initGame() {
                     y: 28,
                 },
                 velocity: {
-                    x: 0,
+                    x: -1,
                     y: 0,
                 },
                 snake: [
@@ -82,7 +82,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 0,
+                    y: -1,
                 },
                 snake: [
                     { x: 30, y: 20 },
@@ -106,9 +106,9 @@ function gameLoop(state) {
     }
 
     for (let id of state.activePlayers) {
-        loser = updatePlayer(state.players[id - 1], state);
-        if (loser) {
-            return loser;
+        let result = updatePlayer(state.players[id - 1], state);
+        if (result) {
+            return result;
         }
     }
 
@@ -117,6 +117,7 @@ function gameLoop(state) {
 }
 
 function updatePlayer(player, state) {
+    console.log(player);
     player.position.x += player.velocity.x;
     player.position.y += player.velocity.y;
 
@@ -202,7 +203,7 @@ function getUpdatedVelocity(keyCode) {
             return { vel: { x: 0, y: 1 }, direction: "down" };
         }
         default: {
-            return { vel: { x: 0, y: 0 }, direction: "" };
+            return;
         }
     }
 }
