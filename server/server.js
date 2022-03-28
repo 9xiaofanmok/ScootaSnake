@@ -12,13 +12,16 @@ const {
 const { FRAME_RATE } = require("./constants");
 const { makeId } = require("./utils");
 
+const netlify = "https://scootasnake.netlify.app";
+const localhost = "http://localhost:8080";
+
 const state = {};
 const clientRooms = {};
 let intervalId;
 
-const io = new Server(process.env.port || 3000, {
+const io = new Server(3000, {
     cors: {
-        origin: "https://scootasnake.netlify.app/",
+        origin: localhost,
     },
 });
 
@@ -26,7 +29,7 @@ io.on("connection", (client) => {
     client.on("newGame", handleNewGame);
     client.on("joinGame", handleJoinGame);
     client.on("keydown", handleKeydown);
-    client.on("timerEnd", handleGameOver);
+    client.on("timerEnd", handleTimerEnd);
     client.on("resetGame", handleResetGame);
 
     function handleNewGame(noOfPlayers) {
@@ -96,7 +99,6 @@ io.on("connection", (client) => {
         client.emit("init", playerNo, room.noOfPlayers);
 
         if (playerNo === room.noOfPlayers) {
-            console.log(state[gameCode]);
             startGameInterval(gameCode);
         }
     }
@@ -137,14 +139,36 @@ io.on("connection", (client) => {
         }
     }
 
-    function handleGameOver() {
+    function handleTimerEnd() {
         const roomName = clientRooms[client.id];
-        Math.max.apply(
+        const highestScore = Math.max.apply(
             null,
             state[roomName].players.map((player) => player.score)
         );
 
-        endGame(state, roomName);
+        const players = state[roomName].players;
+
+        const clients = io.sockets.adapter.rooms.get(roomName);
+        for (let player of players) {
+            for (let clientId of clients) {
+                const client = io.sockets.sockets.get(clientId);
+                if (client.number === player.id) {
+                    if (player.score === highestScore) {
+                        console.log(`WINNER: ${player.id}`);
+                        client.emit("timerEnd", player.score, player.id);
+                    } else {
+                        console.log(`LOSER: ${player.id}`);
+                        client.emit("timerEnd", player.score);
+                    }
+                    const index = state[roomName].activePlayers.indexOf(
+                        player.id
+                    );
+                    state[roomName].activePlayers.splice(index, 1);
+                    break;
+                }
+            }
+        }
+        resetGame(state);
     }
 
     function handleResetGame() {
@@ -161,32 +185,54 @@ function startGameInterval(roomName) {
     intervalId = setInterval(() => {
         const room = io.sockets.adapter.rooms.get(roomName);
 
-        // loser is a number, represents player if player loses
-        const loser = gameLoop(state[roomName]);
+        const player = gameLoop(state[roomName]);
 
-        if (!loser) {
+        if (!player) {
             emitGameState(roomName, state[roomName]);
-        } else if (loser.score && loser.id) {
-            console.log(`ADD SCORE TO: ${loser}`);
+        } else if (!player.end) {
+            console.log(`ADD SCORE TO: ${player.id}`);
             const clients = io.sockets.adapter.rooms.get(roomName);
             for (let clientId of clients) {
                 const client = io.sockets.sockets.get(clientId);
-                if (client.number === loser.id) {
-                    client.emit("addScore", loser.score);
+                if (client.number === player.id) {
+                    client.emit("addScore", player.score);
                     break;
                 }
             }
         } else {
-            console.log(`LOSER: ${loser}`);
-            const index = state[roomName].activePlayers.indexOf(loser);
-            state[roomName].activePlayers.splice(index, 1);
-            console.log(state[roomName]);
-            room.noOfPlayers--;
-        }
+            console.log(`LOSER: ${player.id}`);
 
-        if (state[roomName].activePlayers.length === 1) {
-            const winner = state[roomName].activePlayers[0];
-            endGame(state[roomName], roomName, winner);
+            // remove loser from activePlayers array
+            const index = state[roomName].activePlayers.indexOf(player.id);
+            state[roomName].activePlayers.splice(index, 1);
+            room.noOfPlayers--;
+            console.log(state[roomName]);
+            console.log(room);
+
+            const clients = io.sockets.adapter.rooms.get(roomName);
+            for (let clientId of clients) {
+                const client = io.sockets.sockets.get(clientId);
+                if (client.number === player.id) {
+                    client.emit("gameOver", player.score);
+                    break;
+                }
+            }
+
+            if (state[roomName].activePlayers.length === 1) {
+                const winnerIndex = state[roomName].activePlayers[0] - 1;
+                const winner = state[roomName].players[winnerIndex];
+
+                const clients = io.sockets.adapter.rooms.get(roomName);
+                for (let clientId of clients) {
+                    const client = io.sockets.sockets.get(clientId);
+                    if (client.number === winner.id) {
+                        console.log(`WINNER: ${winner.id}`);
+                        client.emit("gameOver", winner.score, true);
+                        break;
+                    }
+                }
+                resetGame(state[roomName]);
+            }
         }
     }, 1000 / FRAME_RATE);
 }
@@ -196,16 +242,12 @@ function emitGameState(roomName, state) {
     io.sockets.in(roomName).emit("gameState", JSON.stringify(state));
 }
 
-function emitGameOver(roomName, winner) {
-    io.sockets.in(roomName).emit("gameOver", JSON.stringify({ winner }));
+function emitGameOver(roomName, score, winner) {
+    //TODO
+    io.sockets.in(roomName).emit("gameOver", score, winner);
 }
 
-function endGame(roomState, roomName, winner) {
-    emitGameOver(roomName, winner);
-    resetGame(roomState);
-}
-
-function resetGame(roomState, roomName) {
+function resetGame(roomState) {
     roomState = null;
     clearInterval(intervalId);
 }

@@ -1,13 +1,16 @@
 const BG_COLOUR = "#231f20";
 const SNAKE_COLOUR = ["#FFE900", "#FB5012", "#01FDF6", "#CBBAED", "#03FCBA"];
 const FOOD_COLOUR = "#fff";
+const localhost = "http://localhost:3000";
+const heroku = "https://limitless-hollows-28517.herokuapp.com";
 
-const socket = io("https://limitless-hollows-28517.herokuapp.com/");
+const socket = io(localhost);
 
 socket.on("init", handleInit);
 socket.on("gameState", handleGameState);
 socket.on("startCountdown", handleStartCountdown);
 socket.on("gameOver", handleGameOver);
+socket.on("timerEnd", handleTimerEnd);
 socket.on("gameCode", handleGameCode);
 socket.on("unknownGame", handleUnknownGame);
 socket.on("tooManyPlayers", handleTooManyPlayers);
@@ -16,10 +19,9 @@ socket.on("addScore", handleNewScore);
 let canvas, ctx, playerNumber, players;
 let gameActive = false;
 const startingMinutes = 1;
-let time = startingMinutes * 60;
+let time = startingMinutes * 10;
 let intervalId;
 
-const gameScreen = document.getElementById("gameScreen");
 const initialScreen = document.getElementById("initialScreen");
 const noOfPlayers = document.getElementById("noOfPlayers");
 const newGameBtn = document.getElementById("newGameButton");
@@ -27,18 +29,28 @@ const joinGameBtn = document.getElementById("joinGameButton");
 const gameCodeInput = document.getElementById("gameCodeInput");
 const gameCodeDisplay = document.getElementById("gameCodeDisplay");
 
+const gameScreen = document.getElementById("gameScreen");
 const backBtn = document.getElementById("backButton");
 const countdownTimer = document.getElementById("timer");
 const score = document.getElementById("score");
 
+const resultsScreen = document.getElementById("resultsScreen");
+const result = document.getElementById("result");
+const promoCode = document.getElementById("promoCode");
+const finalScore = document.getElementById("finalScore");
+const playAgainBtn = document.getElementById("playAgainButton");
+
 players = parseInt(noOfPlayers.value);
 
-newGameBtn.addEventListener("click", newGame);
-joinGameBtn.addEventListener("click", joinGame);
-backBtn.addEventListener("click", back);
 noOfPlayers.addEventListener("change", (e) => {
     players = parseInt(e.target.value);
 });
+newGameBtn.addEventListener("click", newGame);
+joinGameBtn.addEventListener("click", joinGame);
+
+backBtn.addEventListener("click", () => reset());
+
+playAgainBtn.addEventListener("click", () => reset());
 
 function newGame() {
     socket.emit("newGame", players);
@@ -142,18 +154,42 @@ function handleGameState(gameState) {
     requestAnimationFrame(() => paintGame(gameState));
 }
 
-function handleGameOver(data) {
+function handleGameOver(score, win) {
     if (!gameActive) {
         return;
     }
 
-    data = JSON.parse(data);
+    gameScreen.style.display = "none";
+    resultsScreen.style.display = "block";
 
-    if (data.winner === playerNumber) {
-        alert("You win!");
+    if (win) {
+        result.innerHTML = "&#127881; YOU WON! &#127881;";
+        promoCode.innerHTML = "PROMO CODE: ABC123";
     } else {
-        alert("You lost!");
+        result.innerHTML = "YOU LOST!";
     }
+
+    finalScore.innerHTML = score;
+    clearInterval(intervalId);
+    gameActive = false;
+}
+
+function handleTimerEnd(score, playerId) {
+    if (!gameActive) {
+        return;
+    }
+
+    gameScreen.style.display = "none";
+    resultsScreen.style.display = "block";
+
+    if (playerId && playerId === playerNumber) {
+        result.innerHTML = "&#127881; YOU WON! &#127881;";
+        promoCode.innerHTML = "PROMO CODE: ABC123";
+    } else {
+        result.innerHTML = "YOU LOST!";
+    }
+
+    finalScore.innerHTML = score;
     clearInterval(intervalId);
     gameActive = false;
 }
@@ -184,14 +220,14 @@ function reset() {
     gameCodeDisplay.innerText = "";
     initialScreen.style.display = "grid";
     gameScreen.style.display = "none";
+    resultsScreen.style.display = "none";
     clearInterval(intervalId);
     time = startingMinutes * 60;
     countdownTimer.innerText = `01:00`;
     score.innerText = 0;
+    promoCode.innerText = "";
+    finalScore.innerText = "";
+    result.innerText = "";
 
     socket.emit("resetGame");
-}
-
-function back() {
-    reset();
 }

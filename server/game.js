@@ -1,3 +1,4 @@
+// TODO: ADD INITIAL VELOCITY AND DIRECTION TO PLAYERS
 function initGame() {
     return {
         players: [
@@ -16,7 +17,7 @@ function initGame() {
                     { x: 2, y: 10 },
                     { x: 3, y: 10 },
                 ],
-                direction: "",
+                direction: "right",
                 score: 0,
             },
             {
@@ -34,7 +35,7 @@ function initGame() {
                     { x: 10, y: 17 },
                     { x: 10, y: 18 },
                 ],
-                direction: "",
+                direction: "up",
                 score: 0,
             },
             {
@@ -52,7 +53,7 @@ function initGame() {
                     { x: 15, y: 2 },
                     { x: 15, y: 3 },
                 ],
-                direction: "",
+                direction: "down",
                 score: 0,
             },
             {
@@ -70,7 +71,7 @@ function initGame() {
                     { x: 26, y: 28 },
                     { x: 27, y: 28 },
                 ],
-                direction: "",
+                direction: "left",
                 score: 0,
             },
             {
@@ -88,7 +89,7 @@ function initGame() {
                     { x: 30, y: 21 },
                     { x: 30, y: 22 },
                 ],
-                direction: "",
+                direction: "up",
                 score: 0,
             },
         ],
@@ -128,7 +129,7 @@ function updatePlayer(player, state) {
     ) {
         // TODO: change to return loser?
         console.log(`GAMEOVER: player ${player.id} out of screen`);
-        return player.id;
+        return { score: player.score, id: player.id, end: true };
     }
 
     // player eats food
@@ -141,7 +142,7 @@ function updatePlayer(player, state) {
         player.position.y += player.velocity.y;
         player.score += 10;
         randomFood(state);
-        return { score: player.score, id: player.id };
+        return { score: player.score, id: player.id, end: false };
     }
 
     if (player.velocity.x || player.velocity.y) {
@@ -149,7 +150,7 @@ function updatePlayer(player, state) {
             // check if player eats itself
             if (cell.x === player.position.x && cell.y === player.position.y) {
                 console.log(`GAMEOVER: ${player.id} eats ownself`);
-                return player.id;
+                return { score: player.score, id: player.id, end: true };
             }
         }
 
