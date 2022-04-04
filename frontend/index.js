@@ -4,7 +4,7 @@ const FOOD_COLOUR = "#fff";
 const localhost = "http://localhost:3000";
 const heroku = "https://limitless-hollows-28517.herokuapp.com";
 
-const socket = io(localhost);
+const socket = io(heroku);
 
 socket.on("init", handleInit);
 socket.on("gameState", handleGameState);

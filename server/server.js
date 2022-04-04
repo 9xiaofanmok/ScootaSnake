@@ -20,7 +20,7 @@ let intervalId;
 
 const io = new Server(process.env.PORT || 3000, {
     cors: {
-        origin: localhost,
+        origin: netlify,
     },
 });
 
