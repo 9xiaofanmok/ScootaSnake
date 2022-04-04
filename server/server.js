@@ -47,24 +47,23 @@ io.on("connection", (client) => {
 
         state[roomName].activePlayers.push(1);
 
-        state[roomName].gridsize = 20;
-        // switch (noOfPlayers) {
-        //     case 2:
-        //         state[roomName].gridsize = 20;
-        //         break;
-        //     case 3:
-        //         state[roomName].gridsize = 25;
-        //         break;
-        //     case 4:
-        //         state[roomName].gridsize = 30;
-        //         break;
-        //     case 5:
-        //         state[roomName].gridsize = 35;
-        //         break;
-        //     default:
-        //         state[roomName].gridsize = 15;
-        //         break;
-        // }
+        switch (noOfPlayers) {
+            case 2:
+                state[roomName].gridsize = 20;
+                break;
+            case 3:
+                state[roomName].gridsize = 20;
+                break;
+            case 4:
+                state[roomName].gridsize = 24;
+                break;
+            case 5:
+                state[roomName].gridsize = 24;
+                break;
+            default:
+                state[roomName].gridsize = 20;
+                break;
+        }
 
         randomFood(state[roomName]);
 
@@ -192,18 +191,19 @@ io.on("connection", (client) => {
     }
 
     function handlePlayerLeave() {
-        console.log("PLAYER LEAVE: " + client.number);
-
         const roomName = clientRooms[client.id];
         const room = io.sockets.adapter.rooms.get(roomName);
+        if (client.number && room) {
+            console.log("PLAYER LEAVE: " + client.number);
 
-        const index = state[roomName].activePlayers.indexOf(client.number);
-        state[roomName].activePlayers.splice(index, 1);
-        room.noOfPlayers--;
+            const index = state[roomName].activePlayers.indexOf(client.number);
+            state[roomName].activePlayers.splice(index, 1);
+            room.noOfPlayers--;
 
-        // if left one player, reset game state
-        if (state[roomName].activePlayers.length === 0) {
-            handleResetGame();
+            // if left one player, reset game state
+            if (state[roomName].activePlayers.length === 0) {
+                handleResetGame();
+            }
         }
     }
 });

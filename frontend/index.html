@@ -185,16 +185,20 @@
                                         &#8249; Back
                                     </button>
                                 </div>
-                                <div class="basis-1/2 flex justify-center">
-                                    Your game code is:&nbsp;
-                                    <span id="gameCodeDisplay"></span>
+                                <div
+                                    class="basis-1/2 flex flex-col justify-center text-center"
+                                >
+                                    <div>
+                                        GAME CODE:&nbsp;
+                                        <span id="gameCodeDisplay"></span>
+                                    </div>
                                 </div>
                                 <div class="basis-1/4 flex flex-col items-end">
                                     <div
                                         class="p-5 bg-scoot-yellow text-white w-fit"
                                         id="timer"
                                     >
-                                        00:10
+                                        01:00
                                     </div>
                                     <div class="mt-2">
                                         SCORE:
@@ -204,6 +208,14 @@
                             </div>
 
                             <canvas id="canvas"></canvas>
+
+                            <div class="text-center p-5">
+                                YOUR COLOR:&nbsp;
+                                <span
+                                    id="colorDisplay"
+                                    class="h-5 w-5 inline-block"
+                                ></span>
+                            </div>
                         </div>
                     </div>
                 </div>

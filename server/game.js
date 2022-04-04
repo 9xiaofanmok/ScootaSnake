@@ -9,7 +9,7 @@ function initGame() {
                     y: 10,
                 },
                 velocity: {
-                    x: 0,
+                    x: 1,
                     y: 0,
                 },
                 snake: [
@@ -28,7 +28,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 0,
+                    y: -1,
                 },
                 snake: [
                     { x: 10, y: 16 },
@@ -46,7 +46,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 0,
+                    y: 1,
                 },
                 snake: [
                     { x: 15, y: 1 },
@@ -59,17 +59,17 @@ function initGame() {
             {
                 id: 4,
                 position: {
-                    x: 15,
-                    y: 18,
+                    x: 22,
+                    y: 22,
                 },
                 velocity: {
-                    x: 0,
+                    x: -1,
                     y: 0,
                 },
                 snake: [
-                    { x: 15, y: 18 },
-                    { x: 16, y: 18 },
-                    { x: 17, y: 18 },
+                    { x: 22, y: 22 },
+                    { x: 23, y: 22 },
+                    { x: 23, y: 22 },
                 ],
                 direction: "left",
                 score: 0,
@@ -82,7 +82,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 0,
+                    y: 1,
                 },
                 snake: [
                     { x: 3, y: 3 },

@@ -19,7 +19,7 @@ socket.on("addScore", handleNewScore);
 let canvas, ctx, playerNumber, players;
 let gameActive = false;
 const startingMinutes = 1;
-let time = startingMinutes * 9;
+let time = startingMinutes * 59;
 let intervalId, timeoutId;
 
 const initialScreen = document.getElementById("initialScreen");
@@ -28,6 +28,7 @@ const newGameBtn = document.getElementById("newGameButton");
 const joinGameBtn = document.getElementById("joinGameButton");
 const gameCodeInput = document.getElementById("gameCodeInput");
 const gameCodeDisplay = document.getElementById("gameCodeDisplay");
+const colorDisplay = document.getElementById("colorDisplay");
 
 const gameScreen = document.getElementById("gameScreen");
 const backBtn = document.getElementById("backButton");
@@ -79,25 +80,25 @@ function init() {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
 
-    canvas.width = canvas.height = 500;
+    // canvas.width = canvas.height = 500;
     // FOR BIGGER CANVAS SCREENS
-    // switch (players) {
-    //     case 2:
-    //         canvas.width = canvas.height = 500;
-    //         break;
-    //     case 3:
-    //         canvas.width = canvas.height = 600;
-    //         break;
-    //     case 4:
-    //         canvas.width = canvas.height = 650;
-    //         break;
-    //     case 5:
-    //         canvas.width = canvas.height = 700;
-    //         break;
-    //     default:
-    //         canvas.width = canvas.height = 500;
-    //         break;
-    // }
+    switch (players) {
+        case 2:
+            canvas.width = canvas.height = 500;
+            break;
+        case 3:
+            canvas.width = canvas.height = 500;
+            break;
+        case 4:
+            canvas.width = canvas.height = 600;
+            break;
+        case 5:
+            canvas.width = canvas.height = 600;
+            break;
+        default:
+            canvas.width = canvas.height = 500;
+            break;
+    }
     ctx.fillStyle = BG_COLOUR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.font = "12px 'Press Start 2P'";
@@ -116,6 +117,7 @@ function init() {
 function handleInit(number, noOfPlayers) {
     playerNumber = number;
     players = noOfPlayers;
+    colorDisplay.style.backgroundColor = SNAKE_COLOUR[playerNumber - 1];
 }
 
 function handleStartGame(state) {
@@ -139,19 +141,26 @@ function handleStartCountdown(state) {
             ctx.fillText(
                 countdownTime,
                 canvas.width / 2,
-                canvas.height / 2 - 20
+                canvas.height / 2 - 15
             );
             ctx.fillText(
-                "YOUR COLOR IS  ",
+                "YOUR COLOR:  ",
                 canvas.width / 2,
-                canvas.height / 2 + 20
+                canvas.height / 2 + 25
             );
 
+            let x = 14;
+            let y = 10;
             const gridsize = state.gridsize;
             const size = canvas.width / gridsize;
 
+            if (canvas.width > 500) {
+                x += 2;
+                y += 2;
+            }
+
             ctx.fillStyle = SNAKE_COLOUR[playerNumber - 1];
-            ctx.fillRect(15 * size, 10 * size, size, size);
+            ctx.fillRect(x * size, y * size, size, size);
 
             countdownTime--;
         }
@@ -283,8 +292,8 @@ function reset() {
     gameScreen.style.display = "none";
     resultsScreen.style.display = "none";
     clearInterval(intervalId);
-    time = startingMinutes * 9;
-    timer.innerText = `00:10`;
+    time = startingMinutes * 59;
+    timer.innerText = `01:00`;
     score.innerText = 0;
     promoCode.innerText = "";
     finalScore.innerText = "";
