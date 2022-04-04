@@ -9,7 +9,7 @@ function initGame() {
                     y: 10,
                 },
                 velocity: {
-                    x: 1,
+                    x: 0,
                     y: 0,
                 },
                 snake: [
@@ -28,7 +28,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: -1,
+                    y: 0,
                 },
                 snake: [
                     { x: 10, y: 16 },
@@ -46,7 +46,7 @@ function initGame() {
                 },
                 velocity: {
                     x: 0,
-                    y: 1,
+                    y: 0,
                 },
                 snake: [
                     { x: 15, y: 1 },
@@ -59,17 +59,17 @@ function initGame() {
             {
                 id: 4,
                 position: {
-                    x: 25,
-                    y: 28,
+                    x: 15,
+                    y: 18,
                 },
                 velocity: {
-                    x: -1,
+                    x: 0,
                     y: 0,
                 },
                 snake: [
-                    { x: 25, y: 28 },
-                    { x: 26, y: 28 },
-                    { x: 27, y: 28 },
+                    { x: 15, y: 18 },
+                    { x: 16, y: 18 },
+                    { x: 17, y: 18 },
                 ],
                 direction: "left",
                 score: 0,
@@ -77,19 +77,19 @@ function initGame() {
             {
                 id: 5,
                 position: {
-                    x: 30,
-                    y: 20,
+                    x: 3,
+                    y: 5,
                 },
                 velocity: {
                     x: 0,
-                    y: -1,
+                    y: 0,
                 },
                 snake: [
-                    { x: 30, y: 20 },
-                    { x: 30, y: 21 },
-                    { x: 30, y: 22 },
+                    { x: 3, y: 3 },
+                    { x: 3, y: 4 },
+                    { x: 3, y: 5 },
                 ],
-                direction: "up",
+                direction: "down",
                 score: 0,
             },
         ],
@@ -117,7 +117,6 @@ function gameLoop(state) {
 }
 
 function updatePlayer(player, state) {
-    console.log(player);
     player.position.x += player.velocity.x;
     player.position.y += player.velocity.y;
 

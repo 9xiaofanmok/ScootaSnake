@@ -1,6 +1,5 @@
-// TODO: IF PLAYER LEAVE HALFWAY, END GAME
-// TODO: WAITING AND COUNTDOWN SCREEN
 // TODO: LEGEND PLAYER COLOR
+// TODO: CHANGE TIME TO 60S, CHANGE VELOCITY BACK
 
 const { Server } = require("socket.io");
 const {
@@ -21,7 +20,7 @@ let intervalId;
 
 const io = new Server(process.env.PORT || 3000, {
     cors: {
-        origin: netlify,
+        origin: localhost,
     },
 });
 
@@ -31,6 +30,13 @@ io.on("connection", (client) => {
     client.on("keydown", handleKeydown);
     client.on("timerEnd", handleTimerEnd);
     client.on("resetGame", handleResetGame);
+    client.on("disconnect", (reason) => {
+        console.log("DISCONNECTED: " + reason);
+        if (reason === "transport close") {
+            handlePlayerLeave();
+        }
+    });
+    client.on("backBtn", handlePlayerLeave);
 
     function handleNewGame(noOfPlayers) {
         let roomName = makeId(5);
@@ -41,23 +47,24 @@ io.on("connection", (client) => {
 
         state[roomName].activePlayers.push(1);
 
-        switch (noOfPlayers) {
-            case 2:
-                state[roomName].gridsize = 20;
-                break;
-            case 3:
-                state[roomName].gridsize = 25;
-                break;
-            case 4:
-                state[roomName].gridsize = 30;
-                break;
-            case 5:
-                state[roomName].gridsize = 35;
-                break;
-            default:
-                state[roomName].gridsize = 15;
-                break;
-        }
+        state[roomName].gridsize = 20;
+        // switch (noOfPlayers) {
+        //     case 2:
+        //         state[roomName].gridsize = 20;
+        //         break;
+        //     case 3:
+        //         state[roomName].gridsize = 25;
+        //         break;
+        //     case 4:
+        //         state[roomName].gridsize = 30;
+        //         break;
+        //     case 5:
+        //         state[roomName].gridsize = 35;
+        //         break;
+        //     default:
+        //         state[roomName].gridsize = 15;
+        //         break;
+        // }
 
         randomFood(state[roomName]);
 
@@ -99,7 +106,8 @@ io.on("connection", (client) => {
         client.emit("init", playerNo, room.noOfPlayers);
 
         if (playerNo === room.noOfPlayers) {
-            startGameInterval(gameCode);
+            io.sockets.in(gameCode).emit("startGame", state[gameCode]);
+            setTimeout(startGameInterval, 4000, gameCode);
         }
     }
 
@@ -160,7 +168,7 @@ io.on("connection", (client) => {
             for (let clientId of clients) {
                 const client = io.sockets.sockets.get(clientId);
                 if (client.number === player.id) {
-                    if (player.score === highestScore) {
+                    if (highestScore > 0 && player.score === highestScore) {
                         console.log(`WINNER: ${player.id}`);
                         client.emit("timerEnd", player.score, player.id);
                     } else {
@@ -183,12 +191,24 @@ io.on("connection", (client) => {
         resetGame(state[roomName]);
     }
 
-    // startGameInterval(client, state);
+    function handlePlayerLeave() {
+        console.log("PLAYER LEAVE: " + client.number);
+
+        const roomName = clientRooms[client.id];
+        const room = io.sockets.adapter.rooms.get(roomName);
+
+        const index = state[roomName].activePlayers.indexOf(client.number);
+        state[roomName].activePlayers.splice(index, 1);
+        room.noOfPlayers--;
+
+        // if left one player, reset game state
+        if (state[roomName].activePlayers.length === 0) {
+            handleResetGame();
+        }
+    }
 });
 
 function startGameInterval(roomName) {
-    io.sockets.in(roomName).emit("startCountdown");
-
     intervalId = setInterval(() => {
         const room = io.sockets.adapter.rooms.get(roomName);
 
@@ -213,8 +233,6 @@ function startGameInterval(roomName) {
             const index = state[roomName].activePlayers.indexOf(player.id);
             state[roomName].activePlayers.splice(index, 1);
             room.noOfPlayers--;
-            console.log(state[roomName]);
-            console.log(room);
 
             const clients = io.sockets.adapter.rooms.get(roomName);
             for (let clientId of clients) {
@@ -225,21 +243,22 @@ function startGameInterval(roomName) {
                 }
             }
 
-            if (state[roomName].activePlayers.length === 1) {
-                const winnerIndex = state[roomName].activePlayers[0] - 1;
-                const winner = state[roomName].players[winnerIndex];
+            // if left one player, the player is automatically the winner
+            // if (state[roomName].activePlayers.length === 1) {
+            //     const winnerIndex = state[roomName].activePlayers[0] - 1;
+            //     const winner = state[roomName].players[winnerIndex];
 
-                const clients = io.sockets.adapter.rooms.get(roomName);
-                for (let clientId of clients) {
-                    const client = io.sockets.sockets.get(clientId);
-                    if (client.number === winner.id) {
-                        console.log(`WINNER: ${winner.id}`);
-                        client.emit("gameOver", winner.score, true);
-                        break;
-                    }
-                }
-                resetGame(state[roomName]);
-            }
+            //     const clients = io.sockets.adapter.rooms.get(roomName);
+            //     for (let clientId of clients) {
+            //         const client = io.sockets.sockets.get(clientId);
+            //         if (client.number === winner.id) {
+            //             console.log(`WINNER: ${winner.id}`);
+            //             client.emit("gameOver", winner.score, true);
+            //             break;
+            //         }
+            //     }
+            //     resetGame(state[roomName]);
+            // }
         }
     }, 1000 / FRAME_RATE);
 }
@@ -247,11 +266,6 @@ function startGameInterval(roomName) {
 function emitGameState(roomName, state) {
     // emit the state to all the sockets in the room
     io.sockets.in(roomName).emit("gameState", JSON.stringify(state));
-}
-
-function emitGameOver(roomName, score, winner) {
-    //TODO
-    io.sockets.in(roomName).emit("gameOver", score, winner);
 }
 
 function resetGame(roomState) {

@@ -4,13 +4,13 @@ const FOOD_COLOUR = "#fff";
 const localhost = "http://localhost:3000";
 const heroku = "https://limitless-hollows-28517.herokuapp.com";
 
-const socket = io(heroku);
+const socket = io(localhost);
 
 socket.on("init", handleInit);
 socket.on("gameState", handleGameState);
-socket.on("startCountdown", handleStartCountdown);
-socket.on("gameOver", handleGameOver);
+socket.on("startGame", handleStartGame);
 socket.on("timerEnd", handleTimerEnd);
+socket.on("gameOver", handleGameOver);
 socket.on("gameCode", handleGameCode);
 socket.on("unknownGame", handleUnknownGame);
 socket.on("tooManyPlayers", handleTooManyPlayers);
@@ -19,8 +19,8 @@ socket.on("addScore", handleNewScore);
 let canvas, ctx, playerNumber, players;
 let gameActive = false;
 const startingMinutes = 1;
-let time = startingMinutes * 10;
-let intervalId;
+let time = startingMinutes * 9;
+let intervalId, timeoutId;
 
 const initialScreen = document.getElementById("initialScreen");
 const noOfPlayers = document.getElementById("noOfPlayers");
@@ -31,7 +31,7 @@ const gameCodeDisplay = document.getElementById("gameCodeDisplay");
 
 const gameScreen = document.getElementById("gameScreen");
 const backBtn = document.getElementById("backButton");
-const countdownTimer = document.getElementById("timer");
+const timer = document.getElementById("timer");
 const score = document.getElementById("score");
 
 const resultsScreen = document.getElementById("resultsScreen");
@@ -48,9 +48,17 @@ noOfPlayers.addEventListener("change", (e) => {
 newGameBtn.addEventListener("click", newGame);
 joinGameBtn.addEventListener("click", joinGame);
 
-backBtn.addEventListener("click", () => reset());
+backBtn.addEventListener("click", () => {
+    socket.emit("backBtn");
+    clearTimeout(timeoutId);
+    clearInterval(intervalId);
+    reset();
+});
 
-playAgainBtn.addEventListener("click", () => reset());
+playAgainBtn.addEventListener("click", () => {
+    reset();
+    socket.emit("resetGame");
+});
 
 function newGame() {
     socket.emit("newGame", players);
@@ -71,38 +79,94 @@ function init() {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
 
-    switch (players) {
-        case 2:
-            canvas.width = canvas.height = 500;
-            break;
-        case 3:
-            canvas.width = canvas.height = 600;
-            break;
-        case 4:
-            canvas.width = canvas.height = 650;
-            break;
-        case 5:
-            canvas.width = canvas.height = 700;
-            break;
-        default:
-            canvas.width = canvas.height = 500;
-            break;
-    }
+    canvas.width = canvas.height = 500;
+    // FOR BIGGER CANVAS SCREENS
+    // switch (players) {
+    //     case 2:
+    //         canvas.width = canvas.height = 500;
+    //         break;
+    //     case 3:
+    //         canvas.width = canvas.height = 600;
+    //         break;
+    //     case 4:
+    //         canvas.width = canvas.height = 650;
+    //         break;
+    //     case 5:
+    //         canvas.width = canvas.height = 700;
+    //         break;
+    //     default:
+    //         canvas.width = canvas.height = 500;
+    //         break;
+    // }
     ctx.fillStyle = BG_COLOUR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "12px 'Press Start 2P'";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+    ctx.fillText(
+        "Waiting for other players...",
+        canvas.width / 2,
+        canvas.height / 2
+    );
 
     document.addEventListener("keydown", keydown);
     gameActive = true;
 }
 
-function handleStartCountdown() {
+function handleInit(number, noOfPlayers) {
+    playerNumber = number;
+    players = noOfPlayers;
+}
+
+function handleStartGame(state) {
+    handleStartCountdown(state);
+    timeoutId = setTimeout(handleStartTimer, 4000);
+}
+
+function handleStartCountdown(state) {
+    let countdownTime = 3;
+
+    const countdownId = setInterval(() => {
+        if (countdownTime === 0) {
+            clearInterval(countdownId);
+        } else {
+            ctx.fillStyle = BG_COLOUR;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = "20px 'Press Start 2P'";
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+
+            ctx.fillText(
+                countdownTime,
+                canvas.width / 2,
+                canvas.height / 2 - 20
+            );
+            ctx.fillText(
+                "YOUR COLOR IS  ",
+                canvas.width / 2,
+                canvas.height / 2 + 20
+            );
+
+            const gridsize = state.gridsize;
+            const size = canvas.width / gridsize;
+
+            ctx.fillStyle = SNAKE_COLOUR[playerNumber - 1];
+            ctx.fillRect(15 * size, 10 * size, size, size);
+
+            countdownTime--;
+        }
+    }, 1000);
+    return;
+}
+
+function handleStartTimer() {
     intervalId = setInterval(() => {
         let minutes = Math.floor(time / 60);
         minutes = minutes < 10 ? "0" + minutes : minutes;
         let seconds = time % 60;
         seconds = seconds < 10 ? "0" + seconds : seconds;
 
-        countdownTimer.innerText = `${minutes}:${seconds}`;
+        timer.innerText = `${minutes}:${seconds}`;
         time--;
 
         if (time < 0) {
@@ -139,11 +203,6 @@ function paintPlayer(playerState, size, colour) {
     for (let cell of snake) {
         ctx.fillRect(cell.x * size, cell.y * size, size, size);
     }
-}
-
-function handleInit(number, noOfPlayers) {
-    playerNumber = number;
-    players = noOfPlayers;
 }
 
 function handleGameState(gameState) {
@@ -200,11 +259,13 @@ function handleGameCode(gameCode) {
 
 function handleUnknownGame() {
     reset();
+    socket.emit("resetGame");
     alert("Unknown game code"); // TODO: change to show on UI
 }
 
 function handleTooManyPlayers() {
     reset();
+    socket.emit("resetGame");
     alert("This game is already in progress"); // TODO: change to show on UI
 }
 
@@ -222,12 +283,10 @@ function reset() {
     gameScreen.style.display = "none";
     resultsScreen.style.display = "none";
     clearInterval(intervalId);
-    time = startingMinutes * 60;
-    countdownTimer.innerText = `01:00`;
+    time = startingMinutes * 9;
+    timer.innerText = `00:10`;
     score.innerText = 0;
     promoCode.innerText = "";
     finalScore.innerText = "";
     result.innerText = "";
-
-    socket.emit("resetGame");
 }
