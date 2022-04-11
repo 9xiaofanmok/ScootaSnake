@@ -2,12 +2,6 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <!-- <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
-            crossorigin="anonymous"
-        /> -->
         <link
             rel="apple-touch-icon"
             sizes="180x180"
@@ -56,8 +50,9 @@
     </head>
     <body>
         <section class="h-screen font-['Press_Start_2P']">
-            <div class="container w-4/5 mx-auto py-5">
-                <div class="flex flex-col h-full">
+            <div class="container w-3/5 mx-auto">
+                <!-- INITIAL SCREEN -->
+                <div id="initialScreen" class="flex flex-col h-full pb-5">
                     <div class="mb-3">
                         <img
                             src="./assets/scootasnake-banner.png"
@@ -65,9 +60,7 @@
                             class="object-cover h-auto max-w-full"
                         />
                     </div>
-
-                    <!-- INITIAL SCREEN -->
-                    <div id="initialScreen" class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <img
                                 src="./assets/scootasnake-instructions.png"
@@ -169,77 +162,93 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- GAME SCREEN -->
-                    <div id="gameScreen" class="h-full" style="display: none">
-                        <div
-                            class="flex flex-col items-center justify-center h-full"
-                        >
-                            <div class="my-5 flex items-center w-4/5 gap-3">
-                                <div class="basis-1/4">
-                                    <button
-                                        type="submit"
-                                        class="p-5 bg-scoot-yellow text-white cursor-pointer hover:bg-scoot-light-yellow"
-                                        id="backButton"
-                                    >
-                                        &#8249; Back
-                                    </button>
-                                </div>
-                                <div
-                                    class="basis-1/2 flex flex-col justify-center text-center"
+                <!-- GAME SCREEN -->
+                <div id="gameScreen" class="h-screen" style="display: none">
+                    <div
+                        class="flex flex-col items-center justify-center h-full"
+                    >
+                        <div class="my-5 flex items-center w-4/5 gap-3">
+                            <div class="basis-1/4">
+                                <button
+                                    type="submit"
+                                    class="p-5 bg-scoot-yellow text-white cursor-pointer hover:bg-scoot-light-yellow"
+                                    id="backButton"
                                 >
-                                    <div>
-                                        GAME CODE:&nbsp;
-                                        <span id="gameCodeDisplay"></span>
-                                    </div>
-                                </div>
-                                <div class="basis-1/4 flex flex-col items-end">
-                                    <div
-                                        class="p-5 bg-scoot-yellow text-white w-fit"
-                                        id="timer"
-                                    >
-                                        01:00
-                                    </div>
-                                    <div class="mt-2">
-                                        SCORE:
-                                        <span id="score"> 0 </span>
-                                    </div>
+                                    &#8249; Back
+                                </button>
+                            </div>
+                            <div
+                                class="basis-1/2 flex flex-col justify-center text-center"
+                            >
+                                <div>
+                                    GAME CODE:&nbsp;
+                                    <span id="gameCodeDisplay"></span>
                                 </div>
                             </div>
-
-                            <canvas id="canvas"></canvas>
-
-                            <div class="text-center p-5">
-                                YOUR COLOR:&nbsp;
-                                <span
-                                    id="colorDisplay"
-                                    class="h-5 w-5 inline-block"
-                                ></span>
+                            <div class="basis-1/4 flex flex-col items-end">
+                                <div
+                                    class="p-5 bg-scoot-yellow text-white w-fit"
+                                    id="timer"
+                                >
+                                    01:00
+                                </div>
+                                <div class="mt-2">
+                                    SCORE:
+                                    <span id="score"> 0 </span>
+                                </div>
                             </div>
+                        </div>
+
+                        <canvas id="canvas"></canvas>
+
+                        <div class="text-center m-5">
+                            YOUR COLOR:&nbsp;
+                            <span
+                                id="colorDisplay"
+                                class="h-5 w-5 inline-block"
+                            ></span>
                         </div>
                     </div>
                 </div>
 
                 <!-- RESULTS SCREEN -->
-                <div id="resultsScreen" style="display: none">
-                    <div class="w-[50vw] h-[50vw] bg-scoot-yellow mx-auto p-8">
-                        <div
-                            class="bg-white mx-auto h-full w-full grid place-items-center"
-                        >
-                            <div class="max-w-[80%] text-center grid gap-4">
-                                <div class="text-2xl mb-5">RESULTS</div>
-                                <div id="result" class="text-lg">YOU WIN!</div>
-                                <div class="text-lg" id="promoCode"></div>
-                                <div class="text-lg">
-                                    YOUR SCORE: <span id="finalScore">0</span>
+                <div
+                    id="resultsScreen"
+                    class="flex flex-col h-full pb-5"
+                    style="display: none"
+                >
+                    <div class="mb-3">
+                        <img
+                            src="./assets/scootasnake-banner.png"
+                            alt="ScootaSnake"
+                            class="object-cover h-auto max-w-full"
+                        />
+                    </div>
+                    <div>
+                        <div class="w-3/5 h-[35vw] bg-scoot-yellow mx-auto p-8">
+                            <div
+                                class="bg-white mx-auto h-full w-full grid place-items-center"
+                            >
+                                <div class="max-w-[80%] text-center grid gap-4">
+                                    <div class="text-2xl mb-5">RESULTS</div>
+                                    <div id="result" class="text-lg">
+                                        HOW DID YOU GET HERE?
+                                    </div>
+                                    <div class="text-lg" id="promoCode"></div>
+                                    <div class="text-lg">
+                                        YOUR SCORE:
+                                        <span id="finalScore">0</span>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        class="p-4 bg-scoot-dark-green hover:bg-scoot-green text-white"
+                                        id="playAgainButton"
+                                    >
+                                        PLAY AGAIN
+                                    </button>
                                 </div>
-                                <button
-                                    type="submit"
-                                    class="p-4 bg-scoot-dark-green hover:bg-scoot-green text-white"
-                                    id="playAgainButton"
-                                >
-                                    PLAY AGAIN
-                                </button>
                             </div>
                         </div>
                     </div>

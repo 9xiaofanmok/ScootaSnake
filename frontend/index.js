@@ -8,13 +8,15 @@ const socket = io(heroku);
 
 socket.on("init", handleInit);
 socket.on("gameState", handleGameState);
+socket.on("gameCode", handleGameCode);
 socket.on("startGame", handleStartGame);
+socket.on("addScore", handleNewScore);
+
 socket.on("timerEnd", handleTimerEnd);
 socket.on("gameOver", handleGameOver);
-socket.on("gameCode", handleGameCode);
+
 socket.on("unknownGame", handleUnknownGame);
 socket.on("tooManyPlayers", handleTooManyPlayers);
-socket.on("addScore", handleNewScore);
 
 let canvas, ctx, playerNumber, players;
 let gameActive = false;
@@ -70,35 +72,30 @@ function joinGame() {
     const gameCode = gameCodeInput.value;
     socket.emit("joinGame", gameCode);
     gameCodeDisplay.innerText = gameCode;
-    init();
 }
 
 function init() {
     initialScreen.style.display = "none";
     gameScreen.style.display = "block";
 
+    // initialise canvas
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
 
-    // canvas.width = canvas.height = 500;
-    // FOR BIGGER CANVAS SCREENS
+    // change canvas size based on no of players
     switch (players) {
         case 2:
-            canvas.width = canvas.height = 500;
-            break;
         case 3:
             canvas.width = canvas.height = 500;
             break;
         case 4:
-            canvas.width = canvas.height = 600;
-            break;
         case 5:
             canvas.width = canvas.height = 600;
             break;
         default:
             canvas.width = canvas.height = 500;
-            break;
     }
+
     ctx.fillStyle = BG_COLOUR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.font = "12px 'Press Start 2P'";
@@ -118,13 +115,16 @@ function handleInit(number, noOfPlayers) {
     playerNumber = number;
     players = noOfPlayers;
     colorDisplay.style.backgroundColor = SNAKE_COLOUR[playerNumber - 1];
+    init();
 }
 
 function handleStartGame(state) {
     handleStartCountdown(state);
+    // delay by 4 seconds before starting game timer
     timeoutId = setTimeout(handleStartTimer, 4000);
 }
 
+// countdown 3 seconds before game starts
 function handleStartCountdown(state) {
     let countdownTime = 3;
 
@@ -139,18 +139,20 @@ function handleStartCountdown(state) {
             ctx.textAlign = "center";
 
             ctx.fillText(
-                countdownTime,
+                "GAME IS STARTING IN",
                 canvas.width / 2,
-                canvas.height / 2 - 15
+                canvas.height / 2 - 40
             );
+
+            ctx.fillText(countdownTime, canvas.width / 2, canvas.height / 2);
             ctx.fillText(
                 "YOUR COLOR:  ",
                 canvas.width / 2,
-                canvas.height / 2 + 25
+                canvas.height / 2 + 45
             );
 
             let x = 14;
-            let y = 10;
+            let y = 11;
             const gridsize = state.gridsize;
             const size = canvas.width / gridsize;
 
@@ -189,6 +191,7 @@ function keydown(e) {
     socket.emit("keydown", e.keyCode);
 }
 
+// paint game at each frame based on frame rate to update player and food position
 function paintGame(state) {
     ctx.fillStyle = BG_COLOUR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -214,6 +217,7 @@ function paintPlayer(playerState, size, colour) {
     }
 }
 
+// paint game based on game state
 function handleGameState(gameState) {
     if (!gameActive) {
         return;
@@ -222,7 +226,8 @@ function handleGameState(gameState) {
     requestAnimationFrame(() => paintGame(gameState));
 }
 
-function handleGameOver(score, win) {
+// handle player lose
+function handleGameOver(score, reason) {
     if (!gameActive) {
         return;
     }
@@ -230,18 +235,14 @@ function handleGameOver(score, win) {
     gameScreen.style.display = "none";
     resultsScreen.style.display = "block";
 
-    if (win) {
-        result.innerHTML = "&#127881; YOU WON! &#127881;";
-        promoCode.innerHTML = "PROMO CODE: ABC123";
-    } else {
-        result.innerHTML = "YOU LOST!";
-    }
+    result.innerHTML = `YOU LOST!<br/>${reason}`;
 
     finalScore.innerHTML = score;
     clearInterval(intervalId);
     gameActive = false;
 }
 
+// end game once timer ends
 function handleTimerEnd(score, playerId) {
     if (!gameActive) {
         return;
@@ -253,8 +254,10 @@ function handleTimerEnd(score, playerId) {
     if (playerId && playerId === playerNumber) {
         result.innerHTML = "&#127881; YOU WON! &#127881;";
         promoCode.innerHTML = "PROMO CODE: ABC123";
+    } else if (score > 0) {
+        result.innerHTML = "YOU LOST!<br/>YOUR FRIEND GOT A HIGHER SCORE";
     } else {
-        result.innerHTML = "YOU LOST!";
+        result.innerHTML = "YOU LOST!<br/>YOU DIDN'T EAT ANY FOOD :(";
     }
 
     finalScore.innerHTML = score;
@@ -262,6 +265,7 @@ function handleTimerEnd(score, playerId) {
     gameActive = false;
 }
 
+// update player's game code
 function handleGameCode(gameCode) {
     gameCodeDisplay.innerText = gameCode;
 }
@@ -278,10 +282,12 @@ function handleTooManyPlayers() {
     alert("This game is already in progress"); // TODO: change to show on UI
 }
 
+// update score whenever user eats food
 function handleNewScore(newScore) {
     score.innerText = newScore;
 }
 
+// reset UI
 function reset() {
     gameActive = false;
     playerNumber = null;

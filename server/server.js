@@ -18,12 +18,14 @@ const state = {};
 const clientRooms = {};
 let intervalId;
 
+// change origin between localhost and server url
 const io = new Server(process.env.PORT || 3000, {
     cors: {
         origin: netlify,
     },
 });
 
+// connecting to frontend client
 io.on("connection", (client) => {
     client.on("newGame", handleNewGame);
     client.on("joinGame", handleJoinGame);
@@ -39,34 +41,35 @@ io.on("connection", (client) => {
     client.on("backBtn", handlePlayerLeave);
 
     function handleNewGame(noOfPlayers) {
+        // create new room id
         let roomName = makeId(5);
         clientRooms[client.id] = roomName;
         client.emit("gameCode", roomName);
 
+        // create new game state
         state[roomName] = initGame();
 
+        // add first player to activePlayers array
         state[roomName].activePlayers.push(1);
 
+        // change grid size based on no of players
         switch (noOfPlayers) {
             case 2:
-                state[roomName].gridsize = 20;
-                break;
             case 3:
                 state[roomName].gridsize = 20;
                 break;
             case 4:
-                state[roomName].gridsize = 24;
-                break;
             case 5:
                 state[roomName].gridsize = 24;
                 break;
             default:
                 state[roomName].gridsize = 20;
-                break;
         }
 
+        // assign food position
         randomFood(state[roomName]);
 
+        // assign player's number to socket client
         client.number = 1;
         client.join(roomName);
 
@@ -85,38 +88,50 @@ io.on("connection", (client) => {
             numClients = room.size;
         }
 
+        // if no players in the room
         if (numClients === 0) {
-            // if no players in the room
             client.emit("unknownGame");
             return;
-        } else if (numClients > 5) {
-            // too many players in the room
+        }
+        // too many players in the room
+        if (numClients >= room.noOfPlayers) {
             client.emit("tooManyPlayers");
             return;
         }
 
-        clientRooms[client.id] = gameCode; // add game code to current player's room
-        client.join(gameCode); // add player to room
+        // add game code to current player's room
+        clientRooms[client.id] = gameCode;
+        // add player to room
+        client.join(gameCode);
 
+        // add player number to activePlayers state
         const playerNo = numClients + 1;
         state[gameCode].activePlayers.push(playerNo);
 
+        // assign player number to socket client state
         client.number = playerNo;
+
+        // initiales game on client's side
         client.emit("init", playerNo, room.noOfPlayers);
 
+        // start game if there are enough players
         if (playerNo === room.noOfPlayers) {
             io.sockets.in(gameCode).emit("startGame", state[gameCode]);
+            // start game interval after the 3s countdown + 1s for delay
             setTimeout(startGameInterval, 4000, gameCode);
         }
     }
 
     function handleKeydown(keyCode) {
+        // get room name
         const roomName = clientRooms[client.id];
 
+        // if not in room, escape
         if (!roomName) {
             return;
         }
 
+        // check if keycode is a number
         try {
             keyCode = parseInt(keyCode);
         } catch (e) {
@@ -130,24 +145,28 @@ io.on("connection", (client) => {
             keyCode === 39 ||
             keyCode === 40
         ) {
-            let vel = getUpdatedVelocity(keyCode).vel;
-            const dir = getUpdatedVelocity(keyCode).direction;
+            // update velocity and direction
+            let newVel = getUpdatedVelocity(keyCode).vel;
+            const newDir = getUpdatedVelocity(keyCode).direction;
+
             if (state[roomName]) {
-                const player = state[roomName].players[client.number - 1];
+                // get player's state
+                const playerState = state[roomName].players[client.number - 1];
 
                 if (
-                    (player.direction === "left" && dir === "right") ||
-                    (player.direction === "right" && dir === "left") ||
-                    (player.direction === "up" && dir === "down") ||
-                    (player.direction === "down" && dir === "up")
+                    (playerState.direction === "left" && newDir === "right") ||
+                    (playerState.direction === "right" && newDir === "left") ||
+                    (playerState.direction === "up" && newDir === "down") ||
+                    (playerState.direction === "down" && newDir === "up")
                 ) {
-                    vel = player.velocity;
+                    // if going in same orientation, don't change direction
+                    newVel = playerState.velocity;
                 } else {
-                    player.direction = dir;
+                    playerState.direction = newDir;
                 }
 
-                if (vel) {
-                    player.velocity = vel;
+                if (newVel) {
+                    playerState.velocity = newVel;
                 }
             }
         }
@@ -155,18 +174,33 @@ io.on("connection", (client) => {
 
     function handleTimerEnd() {
         const roomName = clientRooms[client.id];
+
+        // getting active players' states
+        const activePlayers = state[roomName].players.filter((player) => {
+            const tmp = state[roomName].activePlayers;
+            for (let i = 0; i < tmp.length; i++) {
+                if (player.id === tmp[i]) {
+                    return true;
+                }
+            }
+            state[roomName].activePlayers.forEach((activePlayer) => {});
+            return false;
+        });
+
+        // get highest score of active players
         const highestScore = Math.max.apply(
             null,
-            state[roomName].players.map((player) => player.score)
+            activePlayers.map((player) => player.score)
         );
 
-        const players = state[roomName].players;
-
+        // get all the clients in the room
         const clients = io.sockets.adapter.rooms.get(roomName);
-        for (let player of players) {
+
+        for (let player of activePlayers) {
             for (let clientId of clients) {
                 const client = io.sockets.sockets.get(clientId);
                 if (client.number === player.id) {
+                    // make sure highest score must be > 0
                     if (highestScore > 0 && player.score === highestScore) {
                         console.log(`WINNER: ${player.id}`);
                         client.emit("timerEnd", player.score, player.id);
@@ -174,10 +208,6 @@ io.on("connection", (client) => {
                         console.log(`LOSER: ${player.id}`);
                         client.emit("timerEnd", player.score);
                     }
-                    const index = state[roomName].activePlayers.indexOf(
-                        player.id
-                    );
-                    state[roomName].activePlayers.splice(index, 1);
                     break;
                 }
             }
@@ -238,7 +268,7 @@ function startGameInterval(roomName) {
             for (let clientId of clients) {
                 const client = io.sockets.sockets.get(clientId);
                 if (client.number === player.id) {
-                    client.emit("gameOver", player.score);
+                    client.emit("gameOver", player.score, player.reason);
                     break;
                 }
             }
@@ -268,6 +298,7 @@ function emitGameState(roomName, state) {
     io.sockets.in(roomName).emit("gameState", JSON.stringify(state));
 }
 
+// reset game state
 function resetGame(roomState) {
     roomState = null;
     clearInterval(intervalId);

@@ -105,6 +105,7 @@ function gameLoop(state) {
         return;
     }
 
+    // loop through all active players to update state's position
     for (let id of state.activePlayers) {
         let result = updatePlayer(state.players[id - 1], state);
         if (result) {
@@ -129,7 +130,12 @@ function updatePlayer(player, state) {
     ) {
         // TODO: change to return loser?
         console.log(`GAMEOVER: player ${player.id} out of screen`);
-        return { score: player.score, id: player.id, end: true };
+        return {
+            score: player.score,
+            id: player.id,
+            end: true,
+            reason: "YOU WENT OUT OF SCREEN",
+        };
     }
 
     // player eats food
@@ -142,7 +148,7 @@ function updatePlayer(player, state) {
         player.position.y += player.velocity.y;
         player.score += 10;
         randomFood(state);
-        return { score: player.score, id: player.id, end: false };
+        return { score: player.score, id: player.id, end: false, reason: "" };
     }
 
     if (player.velocity.x || player.velocity.y) {
@@ -150,7 +156,12 @@ function updatePlayer(player, state) {
             // check if player eats itself
             if (cell.x === player.position.x && cell.y === player.position.y) {
                 console.log(`GAMEOVER: ${player.id} eats ownself`);
-                return { score: player.score, id: player.id, end: true };
+                return {
+                    score: player.score,
+                    id: player.id,
+                    end: true,
+                    reason: "YOU ATE YOURSELF!",
+                };
             }
         }
 
@@ -162,6 +173,7 @@ function updatePlayer(player, state) {
     return false;
 }
 
+// spawn food
 function randomFood(state) {
     food = {
         x: Math.floor(Math.random() * state.gridsize),
@@ -183,6 +195,7 @@ function randomFood(state) {
     state.food = food;
 }
 
+// update player's velocity and direction based on arrow keys they pressed
 function getUpdatedVelocity(keyCode) {
     switch (keyCode) {
         case 37: {
