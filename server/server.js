@@ -60,7 +60,7 @@ io.on("connection", (client) => {
                 break;
             case 4:
             case 5:
-                state[roomName].gridsize = 24;
+                state[roomName].gridsize = 20;
                 break;
             default:
                 state[roomName].gridsize = 20;

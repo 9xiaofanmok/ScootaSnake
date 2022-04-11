@@ -59,17 +59,17 @@ function initGame() {
             {
                 id: 4,
                 position: {
-                    x: 22,
-                    y: 22,
+                    x: 16,
+                    y: 18,
                 },
                 velocity: {
                     x: -1,
                     y: 0,
                 },
                 snake: [
-                    { x: 22, y: 22 },
-                    { x: 23, y: 22 },
-                    { x: 23, y: 22 },
+                    { x: 16, y: 18 },
+                    { x: 17, y: 18 },
+                    { x: 18, y: 18 },
                 ],
                 direction: "left",
                 score: 0,

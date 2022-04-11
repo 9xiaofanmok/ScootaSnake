@@ -90,7 +90,7 @@ function init() {
             break;
         case 4:
         case 5:
-            canvas.width = canvas.height = 600;
+            canvas.width = canvas.height = 500;
             break;
         default:
             canvas.width = canvas.height = 500;
